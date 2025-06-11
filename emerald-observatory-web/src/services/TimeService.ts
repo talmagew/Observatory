@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { SunPosition, Equator } from 'astronomy-engine';
+import { SunPosition, SiderealTime, MakeTime } from 'astronomy-engine';
 
 export interface TimeServiceState {
   currentTime: DateTime;
@@ -23,7 +23,7 @@ export interface TimeService {
 class TimeServiceImpl implements TimeService {
   private state: TimeServiceState;
   private subscribers: ((state: TimeServiceState) => void)[] = [];
-  private intervalId?: number;
+  private intervalId?: NodeJS.Timeout;
 
   constructor() {
     this.state = {
@@ -40,7 +40,7 @@ class TimeServiceImpl implements TimeService {
 
   private startTimeUpdate() {
     // Update every second
-    this.intervalId = window.setInterval(() => {
+    this.intervalId = setInterval(() => {
       this.state = {
         ...this.state,
         currentTime: DateTime.now()
@@ -63,44 +63,53 @@ class TimeServiceImpl implements TimeService {
 
   getSolarTime(): DateTime {
     const currentTime = this.getCurrentTime();
-    const jd = this.dateTimeToJulianDate(currentTime);
-    
-    // Get the Sun's position
-    const sunPos = SunPosition(jd);
-    const eqPos = Equator(sunPos.ra, sunPos.dec, jd, true);
-    
-    // Calculate the equation of time (in hours)
-    // This is the difference between apparent solar time and mean solar time
-    const eot = eqPos.ra * 24/360 - (jd % 1) * 24;
-    
-    // Calculate the longitude correction (in hours)
-    // 15 degrees = 1 hour
-    const longCorrection = this.state.longitude / 15;
-    
-    // Total correction in minutes
-    const totalCorrection = (eot + longCorrection) * 60;
-    
-    // Apply the correction to get local solar time
-    return currentTime.plus({ minutes: totalCorrection });
+
+    // Simple solar time calculation based on longitude
+    // More accurate implementation would use equation of time
+    const utcTime = currentTime.toUTC();
+
+    // Each degree of longitude = 4 minutes
+    // East is ahead (+), West is behind (-)
+    const longitudeCorrection = this.state.longitude * 4; // minutes
+
+    return utcTime.plus({ minutes: longitudeCorrection });
   }
 
   getSiderealTime(): DateTime {
-    // TODO: Implement sidereal time calculation using astronomy-engine
-    return this.getCurrentTime();
+    const currentTime = this.getCurrentTime();
+
+    // Convert to AstroTime format
+    const astroTime = MakeTime(currentTime.toJSDate());
+
+    // Get Greenwich Sidereal Time (GST) in hours
+    const gst = SiderealTime(astroTime);
+
+    // Convert to Local Sidereal Time (LST) by adding longitude correction
+    // Longitude in degrees / 15 = hours
+    const lst = gst + (this.state.longitude / 15);
+
+    // Normalize to 0-24 hour range
+    const normalizedLst = ((lst % 24) + 24) % 24;
+
+    // Create a DateTime for today at midnight, then add the sidereal hours
+    const today = currentTime.startOf('day');
+    const siderealTime = today.plus({ hours: normalizedLst });
+
+    return siderealTime;
   }
 
   private dateTimeToJulianDate(dt: DateTime): number {
     // Convert DateTime to Julian Date
     const year = dt.year;
     const month = dt.month;
-    const day = dt.day + (dt.hour + dt.minute/60 + dt.second/3600)/24;
+    const day = dt.day + (dt.hour + dt.minute / 60 + dt.second / 3600) / 24;
 
-    let a = Math.floor((14 - month)/12);
+    let a = Math.floor((14 - month) / 12);
     let y = year + 4800 - a;
-    let m = month + 12*a - 3;
+    let m = month + 12 * a - 3;
 
-    let jd = day + Math.floor((153*m + 2)/5) + 365*y + Math.floor(y/4) - 
-             Math.floor(y/100) + Math.floor(y/400) - 32045;
+    let jd = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) -
+      Math.floor(y / 100) + Math.floor(y / 400) - 32045;
 
     return jd;
   }
@@ -132,6 +141,8 @@ class TimeServiceImpl implements TimeService {
 
   subscribe(callback: (state: TimeServiceState) => void): () => void {
     this.subscribers.push(callback);
+    // Call immediately with current state
+    callback(this.state);
     // Return unsubscribe function
     return () => {
       this.subscribers = this.subscribers.filter(cb => cb !== callback);
@@ -141,7 +152,7 @@ class TimeServiceImpl implements TimeService {
   // Cleanup method
   destroy() {
     if (this.intervalId) {
-      window.clearInterval(this.intervalId);
+      clearInterval(this.intervalId);
     }
     this.subscribers = [];
   }
