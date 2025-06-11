@@ -1,68 +1,128 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    
+    color-scheme: light dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  a:hover {
-    color: #747bff;
+
+  /* Dark theme (default) */
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    color: white;
+    transition: background 0.3s ease, color 0.3s ease;
   }
-  button {
-    background-color: #f9f9f9;
+
+  /* Light theme */
+  .light body {
+    background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 50%, #e1f0ff 100%);
+    color: #1a1a2e;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .clock-hand {
+    @apply absolute bg-white rounded-full;
+    transform-origin: 50% 100%;
+  }
+
+  .clock-face {
+    @apply relative w-32 h-32 rounded-full border-2 border-white/30;
+  }
+
+  .hour-marker {
+    @apply absolute w-0.5 h-4 bg-white/40;
+    transform-origin: 50% 62px;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-600 hover:bg-gray-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors;
+  }
+
+  .btn-success {
+    @apply bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors;
+  }
+
+  .glass-panel {
+    @apply bg-white/10 backdrop-blur-sm rounded-xl border border-white/20;
+  }
+
+  .input-field {
+    @apply w-full bg-black/30 border border-white/20 rounded px-3 py-2 text-white placeholder-gray-500 focus:border-blue-400 focus:outline-none;
+  }
+
+  /* Light theme overrides */
+  .light .glass-panel {
+    @apply bg-black/5 border-black/10;
+  }
+
+  .light .input-field {
+    @apply bg-white/50 border-black/20 text-gray-900 placeholder-gray-600;
+  }
+
+  .light .btn-secondary {
+    @apply bg-black/10 hover:bg-black/20 text-gray-900 border-black/20;
+  }
+
+  .light .text-white {
+    @apply text-gray-900;
+  }
+
+  .light .text-gray-300 {
+    @apply text-gray-600;
+  }
+
+  .light .text-gray-400 {
+    @apply text-gray-500;
+  }
+
+  .light .border-white\/20 {
+    @apply border-black/20;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #1e293b 0%, #7c3aed 50%, #1e293b 100%);
+  }
+
+  .animate-spin-slow {
+    animation: spin 2s linear infinite;
   }
 }
